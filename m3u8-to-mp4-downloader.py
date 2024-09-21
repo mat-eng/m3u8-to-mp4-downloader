@@ -10,6 +10,7 @@ ffmpeg is required and need to be on the system path.
 ########################################################################################################################
 # Imports
 import os
+import sys
 import m3u8
 import requests
 import subprocess
@@ -125,10 +126,10 @@ def download_stream(m3u8_url, output_dir, stream_type):
 
 ########################################################################################################################
 # Function to combine video and audio into a single MP4 file using ffmpeg
-def combine_audio_video(video_file, audio_file, output_filename):
+def combine_audio_video(video_file, audio_file, output_filename, ffmpeg_path):
     print(f"Combining video and audio into {output_filename}...")
     command = [
-        'ffmpeg',
+        ffmpeg_path,
         '-i', video_file,
         '-i', audio_file,
         '-c:v', 'copy',  # Copy video codec to avoid re-encoding
@@ -161,14 +162,14 @@ def select_playlist_from_master(master_m3u8_url):
     # Let the user select a video playlist
     print("\nAvailable video playlists:")
     for idx, video_playlist in enumerate(video_playlists):
-        print(f"{idx+1}: {video_playlist}")
+        print(f"{idx+1}: {video_playlist}\n")
     video_choice = int(input("Select the video playlist number: ")) - 1
     video_playlist_url = video_playlists[video_choice]['uri']
 
     # Let the user select an audio playlist
     print("\nAvailable audio playlists:")
     for idx, audio_playlist in enumerate(audio_playlists):
-        print(f"{idx + 1}: {audio_playlist}")
+        print(f"{idx + 1}: {audio_playlist}\n")
     audio_choice = int(input("Select the audio playlist number: ")) - 1
     audio_playlist_url = audio_playlists[audio_choice]['uri']
 
@@ -177,7 +178,7 @@ def select_playlist_from_master(master_m3u8_url):
 
 ########################################################################################################################
 # Main function to download both video and audio streams and combine them
-def download_video_and_audio(output_filename):
+def download_video_and_audio(output_filename, ffmpeg_path):
     # Ask user for web url
     print("")
     webpage_url = input("Paste the url link: ")
@@ -217,7 +218,7 @@ def download_video_and_audio(output_filename):
                 a_out.write(a_in.read())
 
     # Combine audio and video using ffmpeg
-    combine_audio_video(video_file, audio_file, output_filename)
+    combine_audio_video(video_file, audio_file, output_filename, ffmpeg_path)
 
     # Optionally clean up the segment files
     for segment_file in video_segment_files + audio_segment_files:
@@ -247,11 +248,26 @@ def check_ffmpeg():
 
 
 ########################################################################################################################
+# Check if ffmpeg is on the system path or in the bundled executable
+def get_ffmpeg_path():
+    if hasattr(sys, '_MEIPASS'):
+        # If running in a PyInstaller bundle, find ffmpeg in the bundled directory
+        return os.path.join(sys._MEIPASS, 'ffmpeg', 'ffmpeg')
+    else:
+        # Otherwise, check if ffmpeg is on the system PATH
+        if not check_ffmpeg():
+            print("Please install FFmpeg and make sure it's available on the system path. Visit https://www.ffmpeg.org/download.html")
+            exit(1)  # Exit the script if ffmpeg is not available
+        else:
+            return 'ffmpeg'
+
+
+########################################################################################################################
 # Main
 if __name__ == '__main__':
-    if not check_ffmpeg():
-        print("Please install FFmpeg and make sure it's available in the system path. Visit https://www.ffmpeg.org/download.html")
-        exit(1)  # Exit the script if ffmpeg is not available
+    # Check availability of ffmpeg
+    ffmpeg_path = get_ffmpeg_path()
 
     output_filename = 'final-output-' + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') + '.mp4'
-    download_video_and_audio(output_filename)
+
+    download_video_and_audio(output_filename, ffmpeg_path)
