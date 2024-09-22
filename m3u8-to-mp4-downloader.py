@@ -127,7 +127,7 @@ def download_stream(m3u8_url, output_dir, stream_type):
 ########################################################################################################################
 # Function to combine video and audio into a single MP4 file using ffmpeg
 def combine_audio_video(video_file, audio_file, output_filename, ffmpeg_path):
-    print(f"Combining video and audio into {output_filename}...")
+    print(f"\nCombining video and audio into {output_filename}...\n")
     command = [
         ffmpeg_path,
         '-i', video_file,
@@ -138,7 +138,7 @@ def combine_audio_video(video_file, audio_file, output_filename, ffmpeg_path):
         output_filename
     ]
     subprocess.run(command, check=True)
-    print(f"Output file created: {output_filename}")
+    print(f"\nOutput file created: {output_filename}")
 
 
 ########################################################################################################################
@@ -227,7 +227,7 @@ def download_video_and_audio(output_filename, ffmpeg_path):
     os.remove(audio_file)
     os.rmdir(output_dir)
 
-    print(f"Video and audio download and merge complete: {output_filename}")
+    print(f"\nVideo and audio download and merge complete: {output_filename}")
 
 
 ########################################################################################################################
@@ -257,6 +257,7 @@ def get_ffmpeg_path():
         # Otherwise, check if ffmpeg is on the system PATH
         if not check_ffmpeg():
             print("Please install FFmpeg and make sure it's available on the system path. Visit https://www.ffmpeg.org/download.html")
+            input("\n\nPress enter to exit...\n")
             exit(1)  # Exit the script if ffmpeg is not available
         else:
             return 'ffmpeg'
@@ -271,3 +272,5 @@ if __name__ == '__main__':
     output_filename = 'final-output-' + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') + '.mp4'
 
     download_video_and_audio(output_filename, ffmpeg_path)
+
+    input("\n\nPress enter to exit...\n")
